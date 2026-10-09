@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Revisor E-GO Cars</title>
+<style>
+/* Panel de control: barra superior + pestañas; cada ítem es una fila con checks Desktop/Móvil y su guía */
+:root{
+  --bg:#f3f5f7;--panel:#fff;--fg:#14202b;--muted:#5d6b78;--line:#dde3e9;
+  --accent:#0b6bcb;--ok:#1d8a4e;--warn:#b7791f;--bad:#c53030;--okbg:#e6f4ec;--warnbg:#fdf3e1;--badbg:#fde8e8;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--mono:ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root{--bg:#0f151b;--panel:#18212a;--fg:#e6edf3;--muted:#93a1ae;--line:#2a3743;--accent:#4ea3f5;--ok:#4cc38a;--warn:#e0a84a;--bad:#f07070;--okbg:#14301f;--warnbg:#33270f;--badbg:#3a1818;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 var(--sans)}
+header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+header h1{font-size:17px;margin:0 8px 0 0}
+input[type=url]{flex:1;min-width:220px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font:inherit}
+button{padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--fg);font:inherit;cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+nav{display:flex;gap:4px;padding:0 16px;background:var(--panel);border-bottom:1px solid var(--line);overflow-x:auto}
+nav button{border:0;border-bottom:3px solid transparent;border-radius:0;background:none;padding:12px 14px;white-space:nowrap}
+nav button[aria-selected=true]{border-bottom-color:var(--accent);font-weight:600}
+main{padding:16px;max-width:1500px;margin:0 auto}
+.progress{display:flex;align-items:center;gap:10px;margin:0 0 14px}
+.bar{flex:1;height:10px;background:var(--line);border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok);width:0;transition:width .3s}
+.tip{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);padding:10px 14px;border-radius:8px;margin:0 0 14px;color:var(--muted)}
+.tip b{color:var(--fg)}
+/* vistas */
+.views{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.frame{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;min-width:0}
+.frame h3{margin:0 0 8px;font-size:14px;display:flex;justify-content:space-between;gap:8px}
+.frame h3 a{color:var(--accent);font-weight:400}
+.desk{flex:1 1 640px}.mob{flex:0 0 auto}
+.desk .wrap{width:100%;aspect-ratio:1440/900;overflow:hidden;position:relative}
+.desk iframe{width:1440px;height:900px;transform-origin:0 0;position:absolute;border:0;background:#fff}
+.mob iframe{width:390px;height:780px;border:0;border-radius:18px;background:#fff;box-shadow:0 0 0 8px var(--line);max-width:calc(100vw - 64px)}
+/* checklist */
+section.group{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin:0 0 14px;overflow:hidden}
+section.group>h2{margin:0;padding:12px 14px;font-size:15px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+section.group>h2 span{color:var(--muted);font-weight:400;font-variant-numeric:tabular-nums}
+.item{display:grid;grid-template-columns:auto auto 1fr;gap:4px 12px;padding:10px 14px;border-bottom:1px solid var(--line);align-items:start}
+.item:last-child{border-bottom:0}
+.item.done{background:var(--okbg)}
+.item label.ck{display:flex;flex-direction:column;align-items:center;font-size:11px;color:var(--muted);min-width:52px;cursor:pointer}
+.item input[type=checkbox]{width:20px;height:20px;accent-color:var(--ok);cursor:pointer}
+.item .txt{min-width:0}
+.item .txt strong{display:block}
+.item details{color:var(--muted);font-size:14px}
+.item summary{cursor:pointer;color:var(--accent);width:max-content}
+.item textarea{width:100%;margin-top:6px;min-height:34px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);font:13px var(--sans);resize:vertical}
+.one .item{grid-template-columns:auto 1fr}
+/* seo auto */
+.score{font-size:40px;font-weight:700;font-variant-numeric:tabular-nums}
+.res{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.pill{font-size:12px;font-weight:600;padding:2px 8px;border-radius:20px;height:max-content;min-width:70px;text-align:center}
+.pill.ok{background:var(--okbg);color:var(--ok)}.pill.warn{background:var(--warnbg);color:var(--warn)}.pill.error{background:var(--badbg);color:var(--bad)}
+.res .d{color:var(--muted);font-size:14px;overflow-wrap:anywhere}
+.res .f{font-size:14px}
+.tools{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px}
+.tools a{padding:8px 12px;border:1px solid var(--line);border-radius:8px;color:var(--accent);text-decoration:none}
+.muted{color:var(--muted)}
+[hidden]{display:none!important}
+@media (max-width:600px){.item{grid-template-columns:auto auto}.item .txt{grid-column:1/-1}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Revisor E-GO Cars</h1>
+  <input type="url" id="url" placeholder="http://localhost:3000 o https://tusitio.cl" aria-label="Dirección de la página">
+  <button class="primary" id="load">Cargar página</button>
+  <button id="reset" title="Borra todos los checks">Reiniciar checks</button>
+</header>
+<nav role="tablist">
+  <button role="tab" data-tab="ver" aria-selected="true">1 · Ver página</button>
+  <button role="tab" data-tab="ux" aria-selected="false">2 · Funciones y UX/UI</button>
+  <button role="tab" data-tab="seo" aria-selected="false">3 · SEO y buenas prácticas</button>
+</nav>
+<main>
+  <div class="progress"><strong id="pct">0%</strong><div class="bar"><i id="barfill"></i></div><span class="muted" id="count">0 de 0 revisados</span></div>
+  <p class="tip" id="next"></p>
+
+  <div data-panel="ver">
+    <div class="views">
+      <div class="frame desk"><h3>Desktop 1440 px <a id="openD" target="_blank" rel="noopener">abrir aparte ↗</a></h3><div class="wrap"><iframe id="fD" title="Vista desktop"></iframe></div></div>
+      <div class="frame mob"><h3>Móvil 390 px <a id="openM" target="_blank" rel="noopener">abrir aparte ↗</a></h3><iframe id="fM" title="Vista móvil"></iframe></div>
+    </div>
+    <p class="muted">Si una vista sale en blanco, el sitio bloquea mostrarse dentro de otra página: usa "abrir aparte" y, para móvil, en Chrome aprieta F12 → ícono de celular (Ctrl+Shift+M).</p>
+  </div>
+
+  <div data-panel="ux" hidden id="uxList"></div>
+
+  <div data-panel="seo" hidden>
+    <section class="group">
+      <h2>Escaneo automático <button id="scan" class="primary">Escanear ahora</button></h2>
+      <div id="scanOut" class="res"><span></span><span class="muted">Escribe la dirección arriba y aprieta "Escanear ahora".</span></div>
+    </section>
+    <section class="group">
+      <h2>Herramientas oficiales (gratis)</h2>
+      <div class="tools" id="tools"></div>
+    </section>
+    <div id="seoList"></div>
+  </div>
+</main>
+
+<script>
+// Cada ítem: [id, qué revisar, cómo revisarlo]. "both" = check Desktop y Móvil por separado.
+const UX = [
+ ['Primer pantallazo', 'both', [
+  ['hero','Se entiende en 5 segundos qué vende E-GO Cars','Mira la página 5 segundos y tápala. ¿Puedes decir qué venden y a quién? Si no, el título del inicio debe decirlo más claro.'],
+  ['cta','Botón principal visible sin bajar','El botón de acción (cotizar / WhatsApp / ver autos) se ve sin hacer scroll y tiene color que resalta.'],
+  ['logo','Logo lleva al inicio','Haz clic en el logo desde cualquier página: debe volver al inicio.'],
+  ['img','Imágenes nítidas y cargan rápido','Ninguna imagen pixelada, estirada ni que tarde más de 2 segundos.']]],
+ ['Menú y navegación', 'both', [
+  ['menu','Todos los enlaces del menú funcionan','Haz clic en cada opción del menú. Ninguna da error 404 ni lleva a un lugar equivocado.'],
+  ['burger','Menú hamburguesa abre y cierra (móvil)','En móvil toca el ícono ☰: abre, se puede tocar cada opción y se cierra con la X o tocando afuera. En desktop marca si el menú se ve completo.'],
+  ['sticky','Menú no tapa contenido','Al bajar, el menú fijo no tapa títulos ni botones.'],
+  ['anchor','Enlaces internos bajan a la sección correcta','Los botones que llevan a una sección (#autos, #contacto) bajan al lugar correcto y no quedan tapados por el menú.']]],
+ ['Autos / catálogo', 'both', [
+  ['cards','Cada auto muestra foto, nombre y precio','Revisa cada tarjeta: foto correcta, modelo bien escrito, precio con formato $ chileno.'],
+  ['detail','Ficha de auto abre y muestra datos completos','Entra a 2 o 3 autos: autonomía, potencia, carga, colores y garantía están y son correctos.'],
+  ['gallery','Galería / carrusel se puede deslizar','Pasa las fotos con flechas (desktop) y con el dedo (móvil). No se traba.'],
+  ['filter','Filtros y buscador funcionan','Si hay filtros (precio, modelo), prueba 2 combinaciones y revisa que el resultado sea lógico.']]],
+ ['Contacto y conversión', 'both', [
+  ['wa','Botón WhatsApp abre con mensaje listo','Tócalo: abre WhatsApp al número correcto con un texto prellenado.'],
+  ['tel','Teléfono se puede llamar con un toque','En móvil, toca el teléfono: debe abrir la llamada.'],
+  ['form','Formulario envía y llega el correo','Llena el formulario con tus datos de prueba, envía, revisa que salga mensaje de "gracias" y que el correo llegue.'],
+  ['formerr','Formulario avisa errores','Envíalo vacío o con correo mal escrito: debe avisar en rojo qué falta.'],
+  ['map','Mapa / dirección correcta','La dirección y el mapa muestran el local correcto y el horario está al día.']]],
+ ['Diseño UX/UI', 'both', [
+  ['read','Texto fácil de leer','Letra de al menos 16 px en móvil, buen contraste (nada gris claro sobre blanco).'],
+  ['touch','Botones fáciles de tocar','En móvil los botones son grandes (dedo pulgar) y no están pegados entre sí.'],
+  ['scrollx','No se mueve hacia los lados','En móvil desliza horizontal: la página NO debe moverse hacia el costado.'],
+  ['consistent','Colores y letras iguales en todo el sitio','Mismos colores de marca, mismos estilos de botones y títulos en todas las páginas.'],
+  ['spell','Sin faltas de ortografía','Lee todos los títulos y botones. Revisa tildes y nombres de modelos.'],
+  ['footer','Pie de página completo','Tiene redes sociales que funcionan, dirección, teléfono, correo y enlaces legales.']]],
+ ['Funcionamiento técnico', 'both', [
+  ['speed','Carga en menos de 3 segundos','Recarga con Ctrl+Shift+R y cuenta. En móvil, prueba con datos (no Wi-Fi).'],
+  ['console','Sin errores en la consola','Chrome → F12 → pestaña Console. No debe haber mensajes en rojo.'],
+  ['404','Página 404 amable','Escribe una dirección inventada (tusitio.cl/xyz): debe salir una página de error con botón para volver.'],
+  ['browsers','Funciona en Chrome, Safari y Firefox','Abre el sitio en los 3 navegadores (Safari en iPhone es clave).'],
+  ['legal','Cookies y políticas','Aviso de cookies (si usas analítica) y página de política de privacidad / términos.']]]
+];
+const SEO = [
+ ['SEO en Google', [
+  ['gsc','Sitio verificado en Google Search Console','Entra a search.google.com/search-console, agrega el dominio y sube el sitemap.xml.'],
+  ['gbp','Perfil de Google Business al día','Nombre, dirección, horario, fotos y enlace a la web iguales que en el sitio (clave para búsquedas locales).'],
+  ['kw','Palabra clave en título, H1 y primer párrafo','Ej: "autos eléctricos en Santiago". Debe aparecer natural, no repetida 20 veces.'],
+  ['urls','Direcciones limpias','URLs cortas y con palabras: /autos/modelo-x en vez de /p?id=123.'],
+  ['pages','Una página por modelo','Cada auto con su propia página, título y descripción únicos.'],
+  ['schema','Datos estructurados válidos','Pega la URL en "Resultados enriquecidos" (botón abajo): sin errores.']]],
+ ['Velocidad y Core Web Vitals', [
+  ['psi','PageSpeed móvil sobre 80','Usa el botón PageSpeed abajo. Mira la nota de Móvil (la que usa Google).'],
+  ['lcp','LCP menor a 2,5 s','En el informe de PageSpeed: "Largest Contentful Paint". Si es alto, achica la imagen principal.'],
+  ['cls','CLS menor a 0,1','"Cumulative Layout Shift": que nada salte mientras carga. Da alto y ancho fijo a imágenes.'],
+  ['webp','Imágenes en WebP/AVIF y livianas','Ninguna foto sobre 300 KB. Conviértelas en squoosh.app.']]],
+ ['Compartir y seguridad', [
+  ['share','Se ve bien al compartir por WhatsApp','Manda el enlace a tu propio WhatsApp: debe salir imagen, título y descripción.'],
+  ['ssl','Candado HTTPS en todas las páginas','Con y sin www, todas redirigen a https://.'],
+  ['backup','Respaldo del sitio','Tienes copia del código y del contenido (GitHub / hosting).'],
+  ['ga','Analítica midiendo','En Google Analytics 4 → Tiempo real, abre tu sitio y verifica que aparezcas.']]]
+];
+
+const store = (() => { try { return JSON.parse(localStorage.getItem('revisor') || '{}'); } catch { return {}; } })();
+const save = () => { try { localStorage.setItem('revisor', JSON.stringify(store)); } catch {} };
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function render(list, el, both) {
+  el.innerHTML = list.map(([g, mode, items]) => {
+    items = items || mode; const two = both && mode === 'both';
+    return `<section class="group ${two ? '' : 'one'}"><h2>${g}<span data-g></span></h2>` + items.map(([id, t, how]) => {
+      const keys = two ? [id + ':d', id + ':m'] : [id];
+      return `<div class="item" data-keys="${keys.join(' ')}">` + keys.map(k =>
+        `<label class="ck"><input type="checkbox" id="ck-${k}" data-k="${k}" ${store[k] ? 'checked' : ''}>${two ? (k.endsWith(':d') ? 'Desktop' : 'Móvil') : 'Listo'}</label>`).join('') +
+        `<div class="txt"><strong>${t}</strong><details><summary>Cómo revisarlo</summary>${how}</details>
+        <textarea id="note-${id}" data-note="${id}" placeholder="Nota (qué falló o qué corregir)">${esc(store['n:' + id] || '')}</textarea></div></div>`;
+    }).join('') + '</section>';
+  }).join('');
+}
+render(UX, $('#uxList'), true);
+render(SEO.map(([g, i]) => [g, i]), $('#seoList'), false);
+
+function update() {
+  const boxes = [...document.querySelectorAll('input[data-k]')];
+  const done = boxes.filter(b => b.checked).length;
+  const p = Math.round(100 * done / boxes.length);
+  $('#pct').textContent = p + '%'; $('#barfill').style.width = p + '%';
+  $('#count').textContent = `${done} de ${boxes.length} revisados`;
+  document.querySelectorAll('.item').forEach(it => it.classList.toggle('done', [...it.querySelectorAll('input')].every(b => b.checked)));
+  document.querySelectorAll('section.group').forEach(s => { const b = s.querySelectorAll('input[data-k]'); const sp = s.querySelector('[data-g]'); if (sp && b.length) sp.textContent = `${[...b].filter(x => x.checked).length}/${b.length}`; });
+  const first = boxes.find(b => !b.checked);
+  if (!first) { $('#next').innerHTML = '<b>¡Todo revisado!</b> El sitio está en orden. Repite el escaneo SEO después de cada cambio grande.'; return; }
+  const it = first.closest('.item'); const tab = first.closest('[data-panel]').dataset.panel;
+  $('#next').innerHTML = `<b>Siguiente paso (${tab === 'ux' ? 'pestaña 2' : 'pestaña 3'}, ${esc(first.parentElement.textContent.trim())}):</b> ${esc(it.querySelector('strong').textContent)} — ${esc(it.querySelector('details').lastChild.textContent)}`;
+}
+document.addEventListener('change', e => { const k = e.target.dataset.k; if (k) { store[k] = e.target.checked; save(); update(); } });
+document.addEventListener('input', e => { const n = e.target.dataset.note; if (n) { store['n:' + n] = e.target.value; save(); } });
+
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach(x => x.setAttribute('aria-selected', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  fit();
+});
+
+function norm(u) { u = u.trim(); return u && !/^https?:\/\//i.test(u) ? 'http://' + u : u; }
+function load() {
+  const u = norm($('#url').value); if (!u) return;
+  store.url = u; save();
+  ['#fD', '#fM'].forEach(s => $(s).src = u); $('#openD').href = $('#openM').href = u;
+  const e = encodeURIComponent(u);
+  $('#tools').innerHTML = [
+    ['PageSpeed (velocidad)', 'https://pagespeed.web.dev/analysis?url=' + e],
+    ['Resultados enriquecidos (schema)', 'https://search.google.com/test/rich-results?url=' + e],
+    ['Validador HTML W3C', 'https://validator.w3.org/nu/?doc=' + e],
+    ['Search Console', 'https://search.google.com/search-console'],
+    ['Seguridad (headers)', 'https://securityheaders.com/?q=' + e]
+  ].map(([t, h]) => `<a href="${h}" target="_blank" rel="noopener">${t} ↗</a>`).join('') +
+  (/localhost|127\.0\.0\.1/.test(u) ? '<span class="muted">Estas herramientas solo funcionan con el sitio ya publicado (no con localhost).</span>' : '');
+}
+function fit() { const w = $('.desk .wrap'); if (w) $('#fD').style.transform = `scale(${w.clientWidth / 1440})`; }
+addEventListener('resize', fit);
+$('#load').onclick = () => { load(); fit(); };
+$('#url').addEventListener('keydown', e => { if (e.key === 'Enter') { load(); fit(); } });
+$('#reset').onclick = () => {
+  if ($('#reset').dataset.sure) { Object.keys(store).forEach(k => k !== 'url' && delete store[k]); save(); location.reload(); }
+  else { $('#reset').dataset.sure = 1; $('#reset').textContent = '¿Seguro? Toca otra vez'; setTimeout(() => { delete $('#reset').dataset.sure; $('#reset').textContent = 'Reiniciar checks'; }, 3000); }
+};
+
+$('#scan').onclick = async () => {
+  const u = norm($('#url').value); if (!u) return;
+  const out = $('#scanOut'); out.className = ''; out.innerHTML = '<div class="res"><span></span><span class="muted">Escaneando… (hasta 30 s)</span></div>';
+  const r = await fetch('/api/scan?url=' + encodeURIComponent(u)).then(x => x.json()).catch(e => ({ error: e.message }));
+  if (r.error) { out.innerHTML = `<div class="res"><span class="pill error">Error</span><span>${esc(r.error)}</span></div>`; return; }
+  let g = '';
+  out.innerHTML = `<div class="res"><span class="score">${r.score}</span><span><b>puntos de 100</b><br><span class="muted">${esc(r.url)}${r.xfo ? ' · el sitio bloquea iframes (X-Frame-Options), usa "abrir aparte"' : ''}</span></span></div>` +
+    r.checks.map(c => (c.group !== g ? `<div class="res"><span></span><b>${esc(g = c.group)}</b></div>` : '') +
+      `<div class="res"><span class="pill ${c.status}">${{ ok: 'Bien', warn: 'Mejorar', error: 'Arreglar' }[c.status]}</span><span><b>${esc(c.name)}</b> <span class="d">${esc(c.detail)}</span>${c.fix ? `<div class="f">→ ${esc(c.fix)}</div>` : ''}</span></div>`).join('');
+};
+
+if (store.url) { $('#url').value = store.url; load(); }
+update(); requestAnimationFrame(fit);
+</script>
+</body>
+</html>
